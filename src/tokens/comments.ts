@@ -1,4 +1,4 @@
-import type { DocLike, FoldRange, LensConfig, Tok, TokLine } from "../types";
+import type { DocLike, FoldRange, LensConfig, Tok, TokLine } from "@/types";
 
 export function buildCommentRanges(lines: readonly TokLine[], doc: DocLike, cfg: LensConfig): FoldRange[] {
   if (!cfg.comments.foldable) return [];

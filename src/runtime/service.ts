@@ -1,9 +1,10 @@
 import type { TextDocument, Uri } from "vscode";
 
-import { buildBracketRanges } from "../tokens/brackets";
-import { buildCommentRanges } from "../tokens/comments";
-import { buildTagRanges } from "../tokens/tags";
-import type { FoldRange, LensConfig } from "../types";
+import { buildBracketRanges } from "@/tokens/brackets";
+import { buildCommentRanges } from "@/tokens/comments";
+import { buildTagRanges } from "@/tokens/tags";
+import type { FoldRange, LensConfig } from "@/types";
+
 import type { Tokenizer } from "./tokenizer";
 
 interface CacheEntry {

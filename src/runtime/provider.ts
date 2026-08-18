@@ -1,4 +1,5 @@
-import { FoldingRange, FoldingRangeKind, type FoldingRangeProvider, type TextDocument } from "vscode";
+import { FoldingRange, FoldingRangeKind } from "vscode";
+import type { FoldingRangeProvider, TextDocument } from "vscode";
 
 import type { FoldingService } from "./service";
 

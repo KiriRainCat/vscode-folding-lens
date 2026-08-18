@@ -1,4 +1,5 @@
-import type { DocLike, FoldRange, LensConfig, Tok, TokLine } from "../types";
+import type { DocLike, FoldRange, LensConfig, Tok, TokLine } from "@/types";
+
 import { functionParamsText, isObjectLiteral, lineCountText, objectPreviewText, tokenText } from "./previews";
 
 const OPEN_TO_CLOSE: Record<string, string> = { "(": ")", "[": "]", "{": "}", "<": ">" };

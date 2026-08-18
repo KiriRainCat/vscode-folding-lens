@@ -1,4 +1,4 @@
-import type { DocLike, Tok } from "../types";
+import type { DocLike, Tok } from "@/types";
 
 const ELLIPSIS = "…";
 const MAX_OBJECT_PREVIEW_CHARS = 40;

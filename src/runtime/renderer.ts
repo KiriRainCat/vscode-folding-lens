@@ -1,7 +1,8 @@
 import { Range, ThemeColor, window } from "vscode";
 import type { DecorationOptions, Disposable, TextEditor, TextEditorDecorationType } from "vscode";
 
-import type { FoldRange } from "../types";
+import type { FoldRange } from "@/types";
+
 import type { FoldingService } from "./service";
 import type { FoldState } from "./state";
 

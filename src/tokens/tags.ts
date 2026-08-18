@@ -1,4 +1,5 @@
-import type { DocLike, FoldRange, LensConfig, Tok, TokLine } from "../types";
+import type { DocLike, FoldRange, LensConfig, Tok, TokLine } from "@/types";
+
 import { lineCountText, tokenText } from "./previews";
 
 interface OpenTag {
