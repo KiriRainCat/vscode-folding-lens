@@ -54,6 +54,12 @@ pnpm build   # bundle to dist/ (onig.wasm copied via tsdown)
 
 Press F5 to launch the Extension Development Host.
 
+## Acknowledgements
+
+Inspired by [Better Folding](https://github.com/mtbaqer/vscode-better-folding) — the idea of folding closing brackets/tags into the range and rendering custom collapsed previews comes from there. This project is an independent reimplementation, but owes its product concept to the original.
+
+The decoration technique for custom collapsed text (hiding folded text via `display:none` and injecting previews through `::before` content) follows the approach pioneered by the original extension and [vscode-explicit-folding](https://github.com/zokugun/vscode-explicit-folding).
+
 ## License
 
 MIT
