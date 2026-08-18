@@ -1,80 +1,45 @@
 import type { DocLike, FoldRange, LensConfig, Tok, TokLine } from "@/types";
 
-// matches '// #region', '#region', '# endregion', '<!-- #region -->' and friends
-const REGION_MARKER = /^\s*[^\w\s'"`]*\s*#?\s*(?:region|endregion)\b/i;
-
+/**
+ * Block comments only: the preview (summary + synthesized close-comment
+ * terminator) is the lens feature. Line-comment groups are left to VS Code's
+ * own providers — emitting nothing there means no same-start conflict, so
+ * native folding survives.
+ */
 export function buildCommentRanges(lines: readonly TokLine[], doc: DocLike, cfg: LensConfig): FoldRange[] {
   if (!cfg.comments.foldable) return [];
 
   const ranges: FoldRange[] = [];
   let block: { start: number; end: number } | null = null;
-  let lineGroup: { start: number; end: number; style: string } | null = null;
 
   const flushBlock = () => {
     if (block && block.end > block.start) {
       // keep the '/**' marker as real text (native highlighting); the preview
-      // only replaces the rest, synthesizing the hidden '*/' terminator
+      // only replaces the rest, synthesizing the hidden close-comment marker
       const marker = /^\s*(\/\*+[!*]?)/.exec(doc.lineAt(block.start).text);
       const startColumn = marker ? marker[0].length : firstNonWhitespace(doc, block.start);
-      const core = blockPreview(doc, block.start, block.end, cfg.comments.previewMaxLength);
+      const core = blockPreview(doc, block.start, block.end, cfg.preview.commentMaxLength);
       ranges.push({
         start: block.start,
         end: block.end,
         kind: "comment",
         startColumn,
-        collapsedText: truncate(` ${core} ⋯ */`, cfg.comments.previewMaxLength),
+        collapsedText: truncate(` ${core} ⋯ */`, cfg.preview.commentMaxLength),
       });
     }
     block = null;
   };
 
-  const flushLineGroup = () => {
-    if (lineGroup && lineGroup.end > lineGroup.start) {
-      // a leading region-marker line must stay outside the group: our comment
-      // range would otherwise displace the built-in region fold at the same
-      // start line (VS Code drops same-start ranges, ours wins by registration)
-      let start = lineGroup.start;
-      if (REGION_MARKER.test(doc.lineAt(start).text)) start++;
-      if (start < lineGroup.end) {
-        // keep the line-comment marker ('//', '#', ...) as real text
-        const marker = /^\s*([^\w\s'"`]+)/.exec(doc.lineAt(start).text);
-        const startColumn = marker ? marker[0].length : firstNonWhitespace(doc, start);
-        const core = linePreview(doc, start, cfg.comments.previewMaxLength);
-        ranges.push({
-          start,
-          end: lineGroup.end,
-          kind: "comment",
-          startColumn,
-          collapsedText: ` ${core}`,
-        });
-      }
-    }
-    lineGroup = null;
-  };
-
   for (let line = 0; line < lines.length; line++) {
-    const leading = leadingCommentStyle(doc, line, lines[line]?.tokens ?? []);
-
-    if (leading?.startsWith("comment.block")) {
-      flushLineGroup();
+    if (leadingCommentStyle(doc, line, lines[line]?.tokens ?? [])?.startsWith("comment.block")) {
       if (block) block.end = line;
       else block = { start: line, end: line };
-    } else if (leading) {
-      flushBlock();
-      if (lineGroup && lineGroup.style === leading && lineGroup.end === line - 1) {
-        lineGroup.end = line;
-      } else {
-        flushLineGroup();
-        lineGroup = { start: line, end: line, style: leading };
-      }
     } else {
       flushBlock();
-      flushLineGroup();
     }
   }
 
   flushBlock();
-  flushLineGroup();
   return ranges;
 }
 
@@ -112,12 +77,6 @@ function blockPreview(doc: DocLike, start: number, end: number, maxLength: numbe
     return truncate(stripped, maxLength);
   }
   return "…";
-}
-
-function linePreview(doc: DocLike, start: number, maxLength: number): string {
-  const text = doc.lineAt(start).text.trimStart();
-  const stripped = text.replace(/^([^\w\s'"`]+)\s*/, "");
-  return truncate(stripped.length > 0 ? stripped : text, maxLength);
 }
 
 function truncate(text: string, maxLength: number): string {

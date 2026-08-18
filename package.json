@@ -83,6 +83,11 @@
           "default": true,
           "markdownDescription": "Show the first property in the collapsed text of an object literal. Example: `{ id: 123, … }`. Requires `#foldingLens.preview.brackets#`."
         },
+        "foldingLens.preview.commentMaxLength": {
+          "type": "number",
+          "default": 80,
+          "markdownDescription": "Maximum length of block comment previews before truncation."
+        },
         "foldingLens.tags.foldClosing": {
           "type": "boolean",
           "default": true,
@@ -96,12 +101,7 @@
         "foldingLens.comments.foldable": {
           "type": "boolean",
           "default": true,
-          "markdownDescription": "Make block comments and consecutive line-comment groups foldable, with a readable preview of the comment's content."
-        },
-        "foldingLens.comments.preview.maxLength": {
-          "type": "number",
-          "default": 80,
-          "markdownDescription": "Maximum length of comment previews before truncation."
+          "markdownDescription": "Make block comments like `/** … */` foldable with a readable preview of the comment's content. Consecutive line comments (`//`, `#`) are left to VS Code's built-in folding."
         }
       }
     }

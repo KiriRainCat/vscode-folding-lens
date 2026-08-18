@@ -33,6 +33,7 @@ export interface LensConfig {
     functionParams: boolean;
     chaining: boolean;
     objectProperties: boolean;
+    commentMaxLength: number;
   };
   tags: {
     foldClosing: boolean;
@@ -40,6 +41,5 @@ export interface LensConfig {
   };
   comments: {
     foldable: boolean;
-    previewMaxLength: number;
   };
 }

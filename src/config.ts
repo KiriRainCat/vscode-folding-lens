@@ -14,6 +14,7 @@ export function getConfig(): LensConfig {
       functionParams: config.get<boolean>("preview.functionParams", true),
       chaining: config.get<boolean>("preview.chaining", true),
       objectProperties: config.get<boolean>("preview.objectProperties", true),
+      commentMaxLength: config.get<number>("preview.commentMaxLength", 80),
     },
     tags: {
       foldClosing: config.get<boolean>("tags.foldClosing", true),
@@ -21,7 +22,6 @@ export function getConfig(): LensConfig {
     },
     comments: {
       foldable: config.get<boolean>("comments.foldable", true),
-      previewMaxLength: config.get<number>("comments.preview.maxLength", 80),
     },
   };
 }
