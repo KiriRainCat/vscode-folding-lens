@@ -45,6 +45,10 @@ function collectPairs(lines: readonly TokLine[], doc: DocLike): BracketPair[] {
   for (const { tokens } of lines) {
     for (const tok of tokens) {
       if (!isCodeToken(tok)) continue;
+      // import statements are left to VS Code's own folding providers: pairing
+      // them here would displace the native whole-block import fold, which also
+      // powers `editor.foldingImportsByDefault`
+      if (isImportToken(tok)) continue;
       const text = tokenText(doc, tok);
       if (isTypeParamAngle(tok, text)) {
         if (text === "<") stack.push({ ch: "<", tok });
@@ -68,6 +72,10 @@ function collectPairs(lines: readonly TokLine[], doc: DocLike): BracketPair[] {
 
 function isCodeToken(tok: Tok): boolean {
   return !tok.scopes.some((s) => s.startsWith("comment") || s.startsWith("string"));
+}
+
+function isImportToken(tok: Tok): boolean {
+  return tok.scopes.some((s) => s.startsWith("meta.import"));
 }
 
 function isTypeParamAngle(tok: Tok, text: string): boolean {

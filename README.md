@@ -10,6 +10,8 @@ Powered by real TextMate tokenization (no regex heuristics), so brackets inside 
 
 **Closing tags in the fold** — JSX / TSX / HTML / XML folds include `</div>`; the opening tag's first-line attributes (e.g. `className`, `onClick`) stay visible as real, syntax-highlighted text.
 
+**Imports left native** — import statements are not folded by this extension; VS Code's own providers (tsserver, Pylance, …) handle them, so whole-block import folds and `editor.foldingImportsByDefault` work as usual.
+
 **Readable folded previews**
 
 | Collapsed range    | Preview                                           |
