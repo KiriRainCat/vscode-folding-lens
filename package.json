@@ -15,30 +15,32 @@
     "jsx"
   ],
   "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/KiriRainCat/vscode-folding-lens"
+  },
   "publisher": "KiriRainCat",
   "type": "module",
   "main": "./dist/main.mjs",
   "scripts": {
     "fmt": "oxfmt",
     "lint": "oxlint",
-    "test": "vitest",
     "check": "tsc --noEmit",
     "fix": "oxlint --fix && oxfmt && pnpm check",
     "build": "tsdown",
+    "bundle": "vsce package",
     "vscode:prepublish": "tsdown --minify"
-  },
-  "dependencies": {
-    "vscode-oniguruma": "^2.0.1",
-    "vscode-textmate": "^9.3.2"
   },
   "devDependencies": {
     "@types/node": "^26.2.0",
-    "@types/vscode": "^1.125.0",
+    "@types/vscode": "^1.94.0",
+    "@vscode/vsce": "^3.9.2",
     "oxfmt": "^0.63.0",
     "oxlint": "^1.78.0",
     "tsdown": "^0.22.14",
     "typescript": "~7.0.2",
-    "vitest": "^4.1.10"
+    "vscode-textmate": "^9.3.2",
+    "vscode-oniguruma": "^2.0.1"
   },
   "contributes": {
     "configuration": {

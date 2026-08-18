@@ -48,8 +48,8 @@ Comment ranges are registered as `FoldingRangeKind.Comment`, so the built-in "Fo
 ```sh
 pnpm install
 pnpm check   # typecheck
-pnpm test    # unit tests (builders)
 pnpm build   # bundle to dist/ (onig.wasm copied via tsdown)
+pnpm bundle  # package to vsix
 ```
 
 Press F5 to launch the Extension Development Host.
