@@ -32,7 +32,9 @@ export function buildTagRanges(lines: readonly TokLine[], doc: DocLike, cfg: Len
       if (gt) matchAndPop(stack, name, gt, pairs);
     } else {
       const selfClosing = gt ? tokenText(doc, gt).startsWith("/") : false;
-      if (!selfClosing) stack.push({ name, beginTok: tok, beginIdx: i, gtTok: gt, gtIdx });
+      // void elements never close; leaving one on the stack would swallow the
+      // pairing of the next legal open tag
+      if (!selfClosing && !isVoidElement(name)) stack.push({ name, beginTok: tok, beginIdx: i, gtTok: gt, gtIdx });
     }
 
     i = gt ? gtIdx + 1 : i + 1;
@@ -69,6 +71,27 @@ export function buildTagRanges(lines: readonly TokLine[], doc: DocLike, cfg: Len
   }
 
   return ranges;
+}
+
+const VOID_ELEMENTS = new Set([
+  "area",
+  "base",
+  "br",
+  "col",
+  "embed",
+  "hr",
+  "img",
+  "input",
+  "link",
+  "meta",
+  "param",
+  "source",
+  "track",
+  "wbr",
+]);
+
+function isVoidElement(name: string): boolean {
+  return VOID_ELEMENTS.has(name.toLowerCase());
 }
 
 function flatten(lines: readonly TokLine[]): Tok[] {

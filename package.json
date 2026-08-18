@@ -43,6 +43,13 @@
     "vscode-oniguruma": "^2.0.1"
   },
   "contributes": {
+    "commands": [
+      {
+        "command": "foldingLens.reload",
+        "title": "Reload Folding",
+        "category": "Folding Lens"
+      }
+    ],
     "configuration": {
       "title": "Folding Lens",
       "properties": {

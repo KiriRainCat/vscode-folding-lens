@@ -29,6 +29,10 @@ export class Tokenizer {
     this.docs.delete(uri.toString());
   }
 
+  evictAll(): void {
+    this.docs.clear();
+  }
+
   async lines(document: TextDocument): Promise<TokLine[] | null> {
     const grammar = await this.grammars.grammar(document.languageId);
     if (!grammar) return null;

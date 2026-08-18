@@ -16,6 +16,19 @@ export class GrammarRegistry {
   private registry: vsctm.Registry | undefined;
 
   constructor() {
+    this.buildMaps();
+  }
+
+  // extension installs/enables after activation must be picked up; dropping the
+  // registry forces grammars to reload through the fresh maps
+  refresh(): void {
+    this.buildMaps();
+    this.registry = undefined;
+  }
+
+  private buildMaps(): void {
+    this.scopeToPath.clear();
+    this.languageToScope.clear();
     for (const ext of extensions.all) {
       const grammars = ext.packageJSON?.contributes?.grammars;
       if (!Array.isArray(grammars)) continue;

@@ -43,7 +43,7 @@ Comment ranges are registered as `FoldingRangeKind.Comment`, so the built-in "Fo
 ## Known limitations
 
 - The cursor can occasionally hide behind injected preview text — inherent to the decoration-based approach.
-- Folding providers are registered per-language with a short delay on first open, so the first ~2s after opening a file may show native folding before Folding Lens takes over.
+- A second provider registration ~2s after opening a file re-asserts precedence over late-registering built-in providers, so native folding may briefly show before Folding Lens takes over.
 
 ## Development
 
@@ -51,7 +51,7 @@ Comment ranges are registered as `FoldingRangeKind.Comment`, so the built-in "Fo
 pnpm install
 pnpm check   # typecheck
 pnpm build   # bundle to dist/ (onig.wasm copied via tsdown)
-pnpm bundle  # package to vsix
+pnpm bundle  # package to .vsix
 ```
 
 Press F5 to launch the Extension Development Host.

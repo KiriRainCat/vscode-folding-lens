@@ -17,15 +17,11 @@ export class Renderer implements Disposable {
     private readonly foldState: FoldState,
   ) {
     this.deco = window.createTextEditorDecorationType({
-      // hides the remainder of the folded start line
-      textDecoration: "none; display: none;",
+      // zero-width instead of display:none: the hidden range's offsets stay in
+      // the layout, so clicks right of the preview still map to the line end
+      textDecoration: "none; font-size: 0;",
       before: {
         color: new ThemeColor("editorCodeLens.foreground"),
-        // pulls the injected text left so it covers the native '…' placeholder
-        margin: "0 -90% 0 0",
-        textDecoration: "none; cursor: pointer !important;",
-        width: "0",
-        height: "0",
       },
     });
   }
