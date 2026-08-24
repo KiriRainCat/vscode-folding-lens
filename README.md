@@ -12,13 +12,13 @@ Powered by real TextMate tokenization (no regex heuristics), so brackets inside 
 
 **Readable folded previews**
 
-| Collapsed range    | Preview                                           |
-| ------------------ | ------------------------------------------------- |
-| Function           | `function example(first, second) { ⋯ 3 lines ⋯ }` |
-| Object literal     | `{ id: 123, … }`                                  |
-| Generics           | `Foo<Bar, ⋯ 2 lines ⋯ >`                          |
-| JSX element        | `<div id="x" ⋯ 3 lines ⋯ </div>`                  |
-| Block comment      | `/** Calculates the total price ⋯ */`             |
+| Collapsed range | Preview                                           |
+| --------------- | ------------------------------------------------- |
+| Function        | `function example(first, second) { ⋯ 3 lines ⋯ }` |
+| Object literal  | `{ id: 123, … }`                                  |
+| Generics        | `Foo<Bar, ⋯ 2 lines ⋯ >`                          |
+| JSX element     | `<div id="x" ⋯ 3 lines ⋯ </div>`                  |
+| Block comment   | `/** Calculates the total price ⋯ */`             |
 
 After the preview, VS Code's native `⋯` placeholder stays visible and remains clickable to unfold.
 
@@ -34,26 +34,26 @@ This extension deliberately does not take over:
 
 ## Commands
 
-| Command                        | Description                                          |
-| ------------------------------ | ---------------------------------------------------- |
-| `Folding Lens: Reload Folding` | Re-tokenize all documents and recompute folding      |
+| Command                        | Description                                     |
+| ------------------------------ | ----------------------------------------------- |
+| `Folding Lens: Reload Folding` | Re-tokenize all documents and recompute folding |
 
 Also runs automatically when extensions are installed or enabled.
 
 ## Settings
 
-| Setting                                    | Default | Description                                                 |
-| ------------------------------------------ | ------- | ----------------------------------------------------------- |
-| `foldingLens.brackets.foldClosing`         | `true`  | Include closing brackets in the folding range               |
-| `foldingLens.preview.lineCount`            | `true`  | Show folded line count in the preview                       |
-| `foldingLens.preview.brackets`             | `true`  | Wrap preview with brackets (`{…}`)                          |
-| `foldingLens.preview.functionParams`       | `true`  | Show parameter names for folded multi-line parameter lists  |
-| `foldingLens.preview.chaining`             | `true`  | Chain ranges that start where another ends (`f(…) {…}`)     |
-| `foldingLens.preview.objectProperties`     | `true`  | Show first property of folded object literals               |
-| `foldingLens.preview.commentMaxLength`     | `80`    | Max block-comment preview length before truncation          |
-| `foldingLens.tags.foldClosing`             | `true`  | Include closing tags in the folding range                   |
-| `foldingLens.tags.keepFirstLineAttributes` | `true`  | Keep the opening tag's first-line attributes as real text   |
-| `foldingLens.comments.foldable`            | `true`  | Make block comments foldable with readable previews         |
+| Setting                                    | Default | Description                                                |
+| ------------------------------------------ | ------- | ---------------------------------------------------------- |
+| `foldingLens.brackets.foldClosing`         | `true`  | Include closing brackets in the folding range              |
+| `foldingLens.preview.lineCount`            | `true`  | Show folded line count in the preview                      |
+| `foldingLens.preview.brackets`             | `true`  | Wrap preview with brackets (`{…}`)                         |
+| `foldingLens.preview.functionParams`       | `true`  | Show parameter names for folded multi-line parameter lists |
+| `foldingLens.preview.chaining`             | `true`  | Chain ranges that start where another ends (`f(…) {…}`)    |
+| `foldingLens.preview.objectProperties`     | `true`  | Show first property of folded object literals              |
+| `foldingLens.preview.commentMaxLength`     | `80`    | Max block-comment preview length before truncation         |
+| `foldingLens.tags.foldClosing`             | `true`  | Include closing tags in the folding range                  |
+| `foldingLens.tags.keepFirstLineAttributes` | `true`  | Keep the opening tag's first-line attributes as real text  |
+| `foldingLens.comments.foldable`            | `true`  | Make block comments foldable with readable previews        |
 
 ## Known limitations
 

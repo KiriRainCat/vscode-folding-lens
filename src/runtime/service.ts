@@ -51,8 +51,4 @@ export class FoldingService {
   invalidateAll(): void {
     this.cache.clear();
   }
-
-  evict(uri: Uri): void {
-    this.cache.delete(uri.toString());
-  }
 }

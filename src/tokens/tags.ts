@@ -11,7 +11,7 @@ interface OpenTag {
 }
 
 export function buildTagRanges(lines: readonly TokLine[], doc: DocLike, cfg: LensConfig): FoldRange[] {
-  const tokens = flatten(lines);
+  const tokens = lines.flatMap(({ tokens }) => tokens);
   const stack: OpenTag[] = [];
   const pairs: { open: OpenTag; closeGt: Tok }[] = [];
 
@@ -92,12 +92,6 @@ const VOID_ELEMENTS = new Set([
 
 function isVoidElement(name: string): boolean {
   return VOID_ELEMENTS.has(name.toLowerCase());
-}
-
-function flatten(lines: readonly TokLine[]): Tok[] {
-  const result: Tok[] = [];
-  for (const { tokens } of lines) result.push(...tokens);
-  return result;
 }
 
 function isTagBegin(doc: DocLike, tok: Tok): boolean {

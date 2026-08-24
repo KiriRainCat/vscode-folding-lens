@@ -14,10 +14,16 @@ interface InternalRange extends FoldRange {
   closeTok: Tok;
 }
 
+// InternalRange narrowed to the startColumn it was built with; merging and
+// chaining only consider anchored ranges
+interface AnchoredRange extends InternalRange {
+  startColumn: number;
+}
+
 export function buildBracketRanges(lines: readonly TokLine[], doc: DocLike, cfg: LensConfig): FoldRange[] {
   const pairs = collectPairs(lines, doc);
   const wrapped = cfg.preview.brackets && cfg.brackets.foldClosing;
-  const ranges: InternalRange[] = [];
+  let ranges: InternalRange[] = [];
 
   for (const { open, close } of pairs) {
     if (open.line >= close.line) continue;
@@ -33,7 +39,11 @@ export function buildBracketRanges(lines: readonly TokLine[], doc: DocLike, cfg:
     });
   }
 
-  if (cfg.preview.chaining && wrapped) chainRanges(ranges, doc);
+  if (cfg.preview.chaining && wrapped) {
+    const merged = mergeSameStartRanges(ranges);
+    chainRanges(merged, doc);
+    ranges = merged;
+  }
 
   return ranges.map(({ closeTok: _closeTok, ...range }) => range);
 }
@@ -117,7 +127,7 @@ function previewText(
 
   let core: string;
   if (wrapped && cfg.preview.functionParams && openText === "(") {
-    core = functionParamsText(tokensBetween(open, close, lines), doc);
+    core = functionParamsText(open, tokensBetween(open, close, lines), doc);
   } else if (wrapped && cfg.preview.objectProperties && openText === "{" && isObjectLiteral(open)) {
     core = objectPreviewText(open, close, doc) ?? fallback;
   } else if (cfg.preview.lineCount) {
@@ -141,23 +151,54 @@ function tokensBetween(open: Tok, close: Tok, lines: readonly TokLine[]): Tok[] 
   return result;
 }
 
+// nested opens on one start line (`.handler(async ({ ctx }) => {`) stack
+// ranges that always collapse together and would inject overlapping previews.
+// Keep only the outermost range but anchor it at the innermost open: the start
+// line's real text — including the callback's parameter list, syntax
+// highlighted — stays visible, and only one preview is injected right where
+// the hidden tail begins.
+function mergeSameStartRanges(ranges: InternalRange[]): InternalRange[] {
+  const dropped = new Set<InternalRange>();
+  for (const group of groupByStartLine(ranges).values()) {
+    if (group.length < 2) continue;
+    // same-line multi-line opens are necessarily nested, so column order is
+    // outside-in; the outermost close is at or after every inner close
+    group.sort((a, b) => a.startColumn - b.startColumn);
+    const outer = group[0]!;
+    const innermost = group[group.length - 1]!;
+    outer.startColumn = innermost.startColumn;
+    outer.collapsedText = innermost.collapsedText;
+    for (const r of group.slice(1)) dropped.add(r);
+  }
+  return ranges.filter((r) => !dropped.has(r));
+}
+
 function chainRanges(ranges: InternalRange[], doc: DocLike): void {
   ranges.sort((a, b) => b.end - a.end);
-  const byStartLine = new Map<number, InternalRange[]>();
-  for (const r of ranges) {
-    const list = byStartLine.get(r.start);
-    if (list) list.push(r);
-    else byStartLine.set(r.start, [r]);
-  }
+  const byStartLine = groupByStartLine(ranges);
 
   for (const r of ranges) {
     const candidates = (byStartLine.get(r.closeTok.line) ?? [])
-      .filter((c) => c !== r && c.startColumn !== undefined && c.startColumn >= r.closeTok.end)
-      .sort((a, b) => (a.startColumn ?? 0) - (b.startColumn ?? 0));
+      .filter((c) => c !== r && c.startColumn >= r.closeTok.end)
+      .sort((a, b) => a.startColumn - b.startColumn);
     const chain = candidates[0];
     if (!chain) continue;
     const between = doc.lineAt(r.closeTok.line).text.substring(r.closeTok.end, chain.startColumn);
     r.end = chain.end;
     r.collapsedText = (r.collapsedText ?? "") + between + (chain.collapsedText ?? "");
   }
+}
+
+// only ranges with a startColumn (foldClosing + wrapped previews) participate
+// in merging and chaining
+function groupByStartLine(ranges: InternalRange[]): Map<number, AnchoredRange[]> {
+  const byStartLine = new Map<number, AnchoredRange[]>();
+  for (const r of ranges) {
+    if (r.startColumn === undefined) continue;
+    const anchored = r as AnchoredRange;
+    const list = byStartLine.get(r.start);
+    if (list) list.push(anchored);
+    else byStartLine.set(r.start, [anchored]);
+  }
+  return byStartLine;
 }

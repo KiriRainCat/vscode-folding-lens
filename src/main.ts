@@ -25,16 +25,15 @@ export function activate(context: ExtensionContext): void {
       const { languageId } = document;
       if (registered.has(languageId)) continue;
       registered.add(languageId);
-      context.subscriptions.push(
-        languages.registerFoldingRangeProvider({ language: languageId }, new LensFoldingProvider(service)),
-      );
-      renderer.schedule();
-      setTimeout(() => {
-        context.subscriptions.push(
-          languages.registerFoldingRangeProvider({ language: languageId }, new LensFoldingProvider(service)),
-        );
+
+      const register = () => {
+        const provider = new LensFoldingProvider(service);
+        context.subscriptions.push(languages.registerFoldingRangeProvider({ language: languageId }, provider));
         renderer.schedule();
-      }, 2000);
+      };
+
+      register();
+      setTimeout(register, 2000);
     }
   };
 
@@ -47,10 +46,12 @@ export function activate(context: ExtensionContext): void {
   context.subscriptions.push(
     renderer,
     commands.registerCommand("foldingLens.reload", reload),
+
     extensions.onDidChange(() => {
       grammars.refresh();
       reload();
     }),
+
     workspace.onDidChangeTextDocument((e) => {
       let minLine = Number.MAX_SAFE_INTEGER;
       for (const change of e.contentChanges) minLine = Math.min(minLine, change.range.start.line);
@@ -58,20 +59,24 @@ export function activate(context: ExtensionContext): void {
       service.invalidate(e.document.uri);
       renderer.schedule();
     }),
+
     workspace.onDidCloseTextDocument((doc) => {
       tokenizer.evict(doc.uri);
-      service.evict(doc.uri);
+      service.invalidate(doc.uri);
     }),
+
     workspace.onDidChangeConfiguration((e) => {
       if (e.affectsConfiguration("foldingLens")) {
         service.invalidateAll();
         renderer.schedule();
       }
     }),
+
     window.onDidChangeTextEditorVisibleRanges((e) => {
       foldState.update(e.textEditor);
       void renderer.updateNow(e.textEditor);
     }),
+
     window.onDidChangeVisibleTextEditors(() => {
       registerForLanguages();
       renderer.schedule();
