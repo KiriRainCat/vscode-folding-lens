@@ -40,7 +40,7 @@ export function buildBracketRanges(lines: readonly TokLine[], doc: DocLike, cfg:
   }
 
   if (cfg.preview.chaining && wrapped) {
-    const merged = mergeSameStartRanges(ranges);
+    const merged = mergeSameStartRanges(ranges, doc);
     chainRanges(merged, doc);
     ranges = merged;
   }
@@ -157,7 +157,7 @@ function tokensBetween(open: Tok, close: Tok, lines: readonly TokLine[]): Tok[] 
 // line's real text — including the callback's parameter list, syntax
 // highlighted — stays visible, and only one preview is injected right where
 // the hidden tail begins.
-function mergeSameStartRanges(ranges: InternalRange[]): InternalRange[] {
+function mergeSameStartRanges(ranges: InternalRange[], doc: DocLike): InternalRange[] {
   const dropped = new Set<InternalRange>();
   for (const group of groupByStartLine(ranges).values()) {
     if (group.length < 2) continue;
@@ -167,7 +167,16 @@ function mergeSameStartRanges(ranges: InternalRange[]): InternalRange[] {
     const outer = group[0]!;
     const innermost = group[group.length - 1]!;
     outer.startColumn = innermost.startColumn;
-    outer.collapsedText = innermost.collapsedText;
+    // every open left of the anchor stays visible on the start line, so each
+    // outer range contributes its own close bracket to keep the preview
+    // balanced: `Bun.serve({ … })`, not `Bun.serve({ … }`
+    outer.collapsedText =
+      (innermost.collapsedText ?? "") +
+      group
+        .slice(0, -1)
+        .reverse()
+        .map((r) => tokenText(doc, r.closeTok))
+        .join("");
     for (const r of group.slice(1)) dropped.add(r);
   }
   return ranges.filter((r) => !dropped.has(r));
