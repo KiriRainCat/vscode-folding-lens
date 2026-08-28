@@ -1,7 +1,7 @@
 {
   "name": "folding-lens",
   "displayName": "Folding Lens",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "description": "Better folding: closing brackets/tags in range, readable folded previews",
   "categories": [
     "Other"
