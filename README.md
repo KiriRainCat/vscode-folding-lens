@@ -63,10 +63,10 @@ Also runs automatically when extensions are installed or enabled.
 ## Development
 
 ```sh
-pnpm install
-pnpm check   # typecheck
-pnpm build   # bundle to dist/ (onig.wasm copied via tsdown)
-pnpm bundle  # package to vsix
+bun install
+bun check   # typecheck
+bun build   # bundle to dist/ (onig.wasm copied via tsdown)
+bun bundle  # package to vsix
 ```
 
 Press F5 to launch the Extension Development Host.
