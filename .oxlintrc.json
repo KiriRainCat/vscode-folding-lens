@@ -1,6 +1,21 @@
 {
   "$schema": "./node_modules/oxlint/configuration_schema.json",
-  "ignorePatterns": ["**/*.gen.ts", "**/ui/src/components/**"],
-  "plugins": ["eslint", "typescript", "unicorn", "react", "oxc"],
-  "rules": { "no-explicit-any": "warn" }
+  "plugins": ["oxc", "eslint", "typescript", "unicorn", "import", "react"],
+
+  "categories": {
+    "correctness": "error"
+  },
+
+  "rules": {
+    "no-unused-vars": "warn",
+    "eqeqeq": ["warn", "smart"],
+
+    "import/no-cycle": "warn",
+    "import/consistent-type-specifier-style": "warn",
+
+    "typescript/no-explicit-any": "warn",
+    "typescript/prefer-ts-expect-error": "warn"
+  },
+
+  "ignorePatterns": ["**/*.gen.ts"]
 }

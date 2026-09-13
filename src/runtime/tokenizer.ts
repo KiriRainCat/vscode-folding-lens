@@ -1,9 +1,8 @@
-import type { TextDocument, Uri } from "vscode";
-import vsctm from "vscode-textmate";
-
-import type { Tok, TokLine } from "@/types";
-
 import type { GrammarRegistry } from "./grammar";
+import type { Tok, TokLine } from "@/types";
+import type { TextDocument, Uri } from "vscode";
+
+import vsctm from "vscode-textmate";
 
 interface LineState {
   ruleStack: vsctm.StateStack;

@@ -1,6 +1,6 @@
 import type { DocLike, FoldRange, LensConfig, Tok, TokLine } from "@/types";
 
-import { functionParamsText, isObjectLiteral, lineCountText, objectPreviewText, tokenText } from "./previews";
+import { functionParamsText, isCodeToken, isParamsOpen, lineCountText, tokenText } from "./previews";
 
 const OPEN_TO_CLOSE: Record<string, string> = { "(": ")", "[": "]", "{": "}", "<": ">" };
 const CLOSE_TO_OPEN: Record<string, string> = { ")": "(", "]": "[", "}": "{", ">": "<" };
@@ -14,35 +14,47 @@ interface InternalRange extends FoldRange {
   closeTok: Tok;
 }
 
-// InternalRange narrowed to the startColumn it was built with; merging and
-// chaining only consider anchored ranges
-interface AnchoredRange extends InternalRange {
-  startColumn: number;
-}
-
 export function buildBracketRanges(lines: readonly TokLine[], doc: DocLike, cfg: LensConfig): FoldRange[] {
   const pairs = collectPairs(lines, doc);
   const wrapped = cfg.preview.brackets && cfg.brackets.foldClosing;
-  let ranges: InternalRange[] = [];
+  const byStart = new Map<number, InternalRange>();
 
   for (const { open, close } of pairs) {
     if (open.line >= close.line) continue;
+
     const end = close.line - (cfg.brackets.foldClosing ? 0 : 1);
     if (end <= open.line) continue;
-    ranges.push({
+
+    const range: InternalRange = {
       start: open.line,
       end,
-      startColumn: wrapped ? open.start : undefined,
+      ...(wrapped ? { startColumn: open.start } : {}),
       collapsedText: previewText(open, close, lines, doc, cfg, wrapped),
-      kind: undefined,
       closeTok: close,
-    });
+    };
+
+    // Pairs arrive inside-out. Keep the inner anchor while extending to the outer close.
+    const inner = byStart.get(open.line);
+    if (wrapped && inner?.startColumn !== undefined) {
+      range.startColumn = inner.startColumn;
+      range.collapsedText = inner.collapsedText + tokenText(doc, close);
+    }
+
+    byStart.set(open.line, range);
   }
 
+  const ranges = [...byStart.values()];
   if (cfg.preview.chaining && wrapped) {
-    const merged = mergeSameStartRanges(ranges, doc);
-    chainRanges(merged, doc);
-    ranges = merged;
+    // Later starts must be chained before their predecessors consume their previews.
+    ranges.sort((a, b) => b.start - a.start);
+
+    for (const range of ranges) {
+      const next = byStart.get(range.closeTok.line);
+      if (!next || next.startColumn === undefined || next.startColumn < range.closeTok.end) continue;
+      const between = doc.lineAt(range.closeTok.line).text.substring(range.closeTok.end, next.startColumn);
+      range.end = next.end;
+      range.collapsedText += between + next.collapsedText;
+    }
   }
 
   return ranges.map(({ closeTok: _closeTok, ...range }) => range);
@@ -59,16 +71,19 @@ function collectPairs(lines: readonly TokLine[], doc: DocLike): BracketPair[] {
       // them here would displace the native whole-block import fold, which also
       // powers `editor.foldingImportsByDefault`
       if (isImportToken(tok)) continue;
+
       const text = tokenText(doc, tok);
       if (isTypeParamAngle(tok, text)) {
         if (text === "<") stack.push({ ch: "<", tok });
         else if (text === ">") matchClose(stack, "<", tok, pairs);
         continue;
       }
+
       for (let i = 0; i < text.length; i++) {
         const ch = text[i] as string;
         // angle brackets are only paired via exact typeparameters tokens, never as raw chars
         if (ch === "<" || ch === ">") continue;
+
         if (OPEN_TO_CLOSE[ch]) {
           stack.push({ ch, tok: shift(tok, i) });
         } else if (CLOSE_TO_OPEN[ch]) {
@@ -77,11 +92,8 @@ function collectPairs(lines: readonly TokLine[], doc: DocLike): BracketPair[] {
       }
     }
   }
-  return pairs;
-}
 
-function isCodeToken(tok: Tok): boolean {
-  return !tok.scopes.some((s) => s.startsWith("comment") || s.startsWith("string"));
+  return pairs;
 }
 
 function isImportToken(tok: Tok): boolean {
@@ -89,9 +101,7 @@ function isImportToken(tok: Tok): boolean {
 }
 
 function isTypeParamAngle(tok: Tok, text: string): boolean {
-  return (
-    (text === "<" || text === ">") && tok.scopes.some((s) => s.startsWith("punctuation.definition.typeparameters"))
-  );
+  return (text === "<" || text === ">") && tok.scopes.some((s) => s.startsWith("punctuation.definition.typeparameters"));
 }
 
 function shift(tok: Tok, offset: number): Tok {
@@ -113,34 +123,22 @@ function matchClose(stack: { ch: string; tok: Tok }[], openCh: string, closeTok:
   }
 }
 
-function previewText(
-  open: Tok,
-  close: Tok,
-  lines: readonly TokLine[],
-  doc: DocLike,
-  cfg: LensConfig,
-  wrapped: boolean,
-): string {
+function previewText(open: Tok, close: Tok, lines: readonly TokLine[], doc: DocLike, cfg: LensConfig, wrapped: boolean): string {
   const openText = tokenText(doc, open);
   const closeText = tokenText(doc, close);
   const fallback = cfg.preview.lineCount ? lineCountText(close.line - open.line - 1) : "…";
 
-  let core: string;
-  if (wrapped && cfg.preview.functionParams && openText === "(") {
-    core = functionParamsText(open, tokensBetween(open, close, lines), doc);
-  } else if (wrapped && cfg.preview.objectProperties && openText === "{" && isObjectLiteral(open)) {
-    core = objectPreviewText(open, close, doc) ?? fallback;
-  } else if (cfg.preview.lineCount) {
-    core = lineCountText(close.line - open.line - 1);
-  } else {
-    core = "…";
-  }
+  const core =
+    wrapped && cfg.preview.functionParams && isParamsOpen(open)
+      ? (functionParamsText(tokensBetween(open, close, lines), doc) ?? fallback)
+      : fallback;
 
   return wrapped ? `${openText}${core}${closeText}` : core;
 }
 
 function tokensBetween(open: Tok, close: Tok, lines: readonly TokLine[]): Tok[] {
   const result: Tok[] = [];
+
   for (let line = open.line; line <= close.line && line < lines.length; line++) {
     for (const tok of lines[line]?.tokens ?? []) {
       const afterOpen = tok.line > open.line || tok.start >= open.end;
@@ -148,66 +146,6 @@ function tokensBetween(open: Tok, close: Tok, lines: readonly TokLine[]): Tok[] 
       if (afterOpen && beforeClose) result.push(tok);
     }
   }
+
   return result;
-}
-
-// nested opens on one start line (`.handler(async ({ ctx }) => {`) stack
-// ranges that always collapse together and would inject overlapping previews.
-// Keep only the outermost range but anchor it at the innermost open: the start
-// line's real text — including the callback's parameter list, syntax
-// highlighted — stays visible, and only one preview is injected right where
-// the hidden tail begins.
-function mergeSameStartRanges(ranges: InternalRange[], doc: DocLike): InternalRange[] {
-  const dropped = new Set<InternalRange>();
-  for (const group of groupByStartLine(ranges).values()) {
-    if (group.length < 2) continue;
-    // same-line multi-line opens are necessarily nested, so column order is
-    // outside-in; the outermost close is at or after every inner close
-    group.sort((a, b) => a.startColumn - b.startColumn);
-    const outer = group[0]!;
-    const innermost = group[group.length - 1]!;
-    outer.startColumn = innermost.startColumn;
-    // every open left of the anchor stays visible on the start line, so each
-    // outer range contributes its own close bracket to keep the preview
-    // balanced: `Bun.serve({ … })`, not `Bun.serve({ … }`
-    outer.collapsedText =
-      (innermost.collapsedText ?? "") +
-      group
-        .slice(0, -1)
-        .reverse()
-        .map((r) => tokenText(doc, r.closeTok))
-        .join("");
-    for (const r of group.slice(1)) dropped.add(r);
-  }
-  return ranges.filter((r) => !dropped.has(r));
-}
-
-function chainRanges(ranges: InternalRange[], doc: DocLike): void {
-  ranges.sort((a, b) => b.end - a.end);
-  const byStartLine = groupByStartLine(ranges);
-
-  for (const r of ranges) {
-    const candidates = (byStartLine.get(r.closeTok.line) ?? [])
-      .filter((c) => c !== r && c.startColumn >= r.closeTok.end)
-      .sort((a, b) => a.startColumn - b.startColumn);
-    const chain = candidates[0];
-    if (!chain) continue;
-    const between = doc.lineAt(r.closeTok.line).text.substring(r.closeTok.end, chain.startColumn);
-    r.end = chain.end;
-    r.collapsedText = (r.collapsedText ?? "") + between + (chain.collapsedText ?? "");
-  }
-}
-
-// only ranges with a startColumn (foldClosing + wrapped previews) participate
-// in merging and chaining
-function groupByStartLine(ranges: InternalRange[]): Map<number, AnchoredRange[]> {
-  const byStartLine = new Map<number, AnchoredRange[]>();
-  for (const r of ranges) {
-    if (r.startColumn === undefined) continue;
-    const anchored = r as AnchoredRange;
-    const list = byStartLine.get(r.start);
-    if (list) list.push(anchored);
-    else byStartLine.set(r.start, [anchored]);
-  }
-  return byStartLine;
 }

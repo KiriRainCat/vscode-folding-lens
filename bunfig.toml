@@ -6,4 +6,4 @@ elide-lines = 0
 
 [install]
 linker = "isolated"
-minimumReleaseAge = 259200
+minimumReleaseAge = 86400

@@ -1,50 +1,67 @@
-import { type ExtensionContext, commands, extensions, languages, window, workspace } from "vscode";
+import type { Disposable, ExtensionContext } from "vscode";
+
+import { commands, extensions, languages, window, workspace } from "vscode";
 
 import { getConfig } from "./config";
 import { GrammarRegistry } from "./runtime/grammar";
 import { LensFoldingProvider } from "./runtime/provider";
 import { Renderer } from "./runtime/renderer";
 import { FoldingService } from "./runtime/service";
-import { FoldState } from "./runtime/state";
 import { Tokenizer } from "./runtime/tokenizer";
 
 export function activate(context: ExtensionContext): void {
   const grammars = new GrammarRegistry();
   const tokenizer = new Tokenizer(grammars);
   const service = new FoldingService(tokenizer, getConfig);
-  const foldState = new FoldState();
-  const renderer = new Renderer(service, foldState);
+  const provider = new LensFoldingProvider(service);
+  const renderer = new Renderer(service);
 
-  // '*' selectors score lower than exact language matches, so built-in providers
-  // would always win. Registering per-language, immediately and once more after
-  // a short delay to re-assert precedence over late-registering providers,
-  // makes this provider take over; duplicate ranges merge away.
-  const registered = new Set<string>();
+  // Exact language selectors and one delayed replacement retain precedence over late providers.
+  const registered = new Map<string, Disposable>();
+  const timers = new Set<ReturnType<typeof setTimeout>>();
   const registerForLanguages = () => {
     for (const { document } of window.visibleTextEditors) {
       const { languageId } = document;
       if (registered.has(languageId)) continue;
-      registered.add(languageId);
 
       const register = () => {
-        const provider = new LensFoldingProvider(service);
-        context.subscriptions.push(languages.registerFoldingRangeProvider({ language: languageId }, provider));
+        registered.get(languageId)?.dispose();
+        registered.set(languageId, languages.registerFoldingRangeProvider({ language: languageId }, provider));
         renderer.schedule();
       };
 
       register();
-      setTimeout(register, 2000);
+      const timer = setTimeout(() => {
+        timers.delete(timer);
+        register();
+      }, 2000);
+
+      timers.add(timer);
     }
+  };
+
+  const refresh = () => {
+    service.invalidateAll();
+    provider.refresh();
+    renderer.schedule();
   };
 
   const reload = () => {
     tokenizer.evictAll();
-    service.invalidateAll();
-    renderer.schedule();
+    refresh();
   };
 
   context.subscriptions.push(
     renderer,
+    provider,
+    grammars,
+    {
+      dispose: () => {
+        for (const timer of timers) clearTimeout(timer);
+        for (const registration of registered.values()) registration.dispose();
+      },
+    },
+
     commands.registerCommand("foldingLens.reload", reload),
 
     extensions.onDidChange(() => {
@@ -67,13 +84,11 @@ export function activate(context: ExtensionContext): void {
 
     workspace.onDidChangeConfiguration((e) => {
       if (e.affectsConfiguration("foldingLens")) {
-        service.invalidateAll();
-        renderer.schedule();
+        refresh();
       }
     }),
 
     window.onDidChangeTextEditorVisibleRanges((e) => {
-      foldState.update(e.textEditor);
       void renderer.updateNow(e.textEditor);
     }),
 
@@ -86,5 +101,3 @@ export function activate(context: ExtensionContext): void {
   registerForLanguages();
   renderer.schedule();
 }
-
-export function deactivate(): void {}

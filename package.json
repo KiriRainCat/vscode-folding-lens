@@ -1,8 +1,8 @@
 {
   "name": "folding-lens",
   "displayName": "Folding Lens",
-  "version": "0.1.2",
-  "description": "Better folding: closing brackets/tags in range, readable folded previews",
+  "version": "0.2.0",
+  "description": "Better folding for VSCode: closing brackets in range, readable folded previews",
   "categories": [
     "Other"
   ],
@@ -21,7 +21,7 @@
   },
   "publisher": "KiriRainCat",
   "type": "module",
-  "main": "./dist/main.mjs",
+  "main": "./dist/index.mjs",
   "scripts": {
     "fmt": "oxfmt",
     "lint": "oxlint",
@@ -33,7 +33,7 @@
   },
   "devDependencies": {
     "@types/node": "^26.4.0",
-    "@types/vscode": "^1.134.0",
+    "@types/vscode": "^1.94.0",
     "@vscode/vsce": "^3.9.2",
     "oxfmt": "^0.65.0",
     "oxlint": "^1.80.0",
@@ -71,37 +71,23 @@
         "foldingLens.preview.functionParams": {
           "type": "boolean",
           "default": true,
-          "markdownDescription": "Show parameter names in the collapsed text of a folded multi-line parameter list. Example: `function example(firstParam, secondParam) {…}`. Requires `#foldingLens.preview.brackets#`."
+          "markdownDescription": "Show parameter names only for explicit multi-line parameter declarations. Calls and unrecognized lists use the basic preview. Requires `#foldingLens.preview.brackets#`."
         },
         "foldingLens.preview.chaining": {
           "type": "boolean",
           "default": true,
           "markdownDescription": "When folding a range, chain ranges that start on the line where it ends. Example: `function example(…) {…}` instead of `function example(…) {`. Requires `#foldingLens.preview.brackets#`."
         },
-        "foldingLens.preview.objectProperties": {
-          "type": "boolean",
-          "default": true,
-          "markdownDescription": "Show the first property in the collapsed text of an object literal. Example: `{ id: 123, … }`. Requires `#foldingLens.preview.brackets#`."
-        },
         "foldingLens.preview.commentMaxLength": {
           "type": "number",
           "default": 80,
-          "markdownDescription": "Maximum length of block comment previews before truncation."
-        },
-        "foldingLens.tags.foldClosing": {
-          "type": "boolean",
-          "default": true,
-          "markdownDescription": "Include closing tags like `</div>` in the folding range (JSX/TSX/HTML/XML)."
-        },
-        "foldingLens.tags.keepFirstLineAttributes": {
-          "type": "boolean",
-          "default": true,
-          "markdownDescription": "Keep the opening tag's first-line attributes (e.g. `className`, `onClick`) as real syntax-highlighted text instead of hiding them behind the collapsed preview."
+          "markdownDescription": "Maximum length of the complete block comment preview, including its closing marker. Rounded down, with a minimum of 6.",
+          "minimum": 6
         },
         "foldingLens.comments.foldable": {
           "type": "boolean",
           "default": true,
-          "markdownDescription": "Make block comments like `/** … */` foldable with a readable preview of the comment's content. Consecutive line comments (`//`, `#`) are left to VS Code's built-in folding."
+          "markdownDescription": "Fold closed multi-line /* … */ comments that begin at the first non-whitespace character. Other comments are left to native providers."
         }
       }
     }

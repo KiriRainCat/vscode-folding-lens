@@ -1,19 +1,17 @@
 {
   "$schema": "./node_modules/oxfmt/configuration_schema.json",
-  "ignorePatterns": ["**/*.gen.ts", "**/ui/src/components/**"],
-  "sortTailwindcss": { "functions": ["cn", "cva", "clsx"] },
+  "sortTailwindcss": { "functions": ["cn", "tv", "cva", "clsx"] },
+
+  "printWidth": 140,
+
+  "proseWrap": "never",
+  "quoteProps": "consistent",
   "htmlWhitespaceSensitivity": "ignore",
-  "printWidth": 120,
+
   "sortImports": {
-    "customGroups": [
-      { "groupName": "value-monorepo", "elementNamePattern": ["@repo/**"], "modifiers": ["value"] },
-      { "groupName": "type-monorepo", "elementNamePattern": ["@repo/**"], "modifiers": ["type"] }
-    ],
-    "groups": [
-      ["value-builtin", "type-builtin"],
-      ["value-external", "type-external"],
-      ["value-monorepo", "type-monorepo"],
-      ["value-internal", "type-internal"]
-    ]
-  }
+    "customGroups": [{ "groupName": "monorepo", "elementNamePattern": ["@repo/**"], "modifiers": ["value"] }],
+    "groups": [["type"], ["builtin", "external"], ["monorepo"], ["internal"], ["parent", "sibling", "index"]]
+  },
+
+  "ignorePatterns": ["**/*.gen.ts", "**/migrations/**"]
 }

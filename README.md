@@ -1,23 +1,20 @@
 # Folding Lens
 
-Better folding for VS Code: closing brackets/tags included in the fold, and readable previews on collapsed ranges.
+Better folding for VS Code: closing brackets included in the fold, and readable previews on collapsed ranges.
 
-Powered by real TextMate tokenization (no regex heuristics), so brackets inside strings and comments are never miscounted.
+Uses TextMate tokenization to exclude string and comment tokens from bracket matching.
 
 ## Features
 
 **Closing brackets in the fold** — folding a block includes its `}` / `]` / `)` line.
-
-**Closing tags in the fold** — JSX / TSX / HTML / XML folds include `</div>`; the opening tag's first-line attributes (e.g. `className`, `onClick`) stay visible as real, syntax-highlighted text.
 
 **Readable folded previews**
 
 | Collapsed range | Preview                                           |
 | --------------- | ------------------------------------------------- |
 | Function        | `function example(first, second) { ⋯ 3 lines ⋯ }` |
-| Object literal  | `{ id: 123, … }`                                  |
+| Object literal  | `{ ⋯ 3 lines ⋯ }`                                 |
 | Generics        | `Foo<Bar, ⋯ 2 lines ⋯ >`                          |
-| JSX element     | `<div id="x" ⋯ 3 lines ⋯ </div>`                  |
 | Block comment   | `/** Calculates the total price ⋯ */`             |
 
 After the preview, VS Code's native `⋯` placeholder stays visible and remains clickable to unfold.
@@ -28,6 +25,7 @@ Block comment ranges are registered as `FoldingRangeKind.Comment`, so the built-
 
 This extension deliberately does not take over:
 
+- **Tags** — HTML, JSX, TSX and XML tags use native folding. Ordinary bracket enhancement remains active in JSX/TSX.
 - **Imports** — whole-block import folds and `editor.foldingImportsByDefault` come from VS Code's own providers (tsserver, Pylance, …).
 - **Line comments** — consecutive `//` / `#` groups fold natively.
 - **Indentation folding** — when there is nothing for this extension to contribute in a document (no grammar, nothing foldable), the native indentation fallback stays active.
@@ -38,22 +36,19 @@ This extension deliberately does not take over:
 | ------------------------------ | ----------------------------------------------- |
 | `Folding Lens: Reload Folding` | Re-tokenize all documents and recompute folding |
 
-Also runs automatically when extensions are installed or enabled.
+Also runs automatically when extensions are installed or enabled. Reload, settings changes and grammar refreshes invalidate the relevant caches and notify VS Code to recompute folding ranges.
 
 ## Settings
 
-| Setting                                    | Default | Description                                                |
-| ------------------------------------------ | ------- | ---------------------------------------------------------- |
-| `foldingLens.brackets.foldClosing`         | `true`  | Include closing brackets in the folding range              |
-| `foldingLens.preview.lineCount`            | `true`  | Show folded line count in the preview                      |
-| `foldingLens.preview.brackets`             | `true`  | Wrap preview with brackets (`{…}`)                         |
-| `foldingLens.preview.functionParams`       | `true`  | Show parameter names for folded multi-line parameter lists |
-| `foldingLens.preview.chaining`             | `true`  | Chain ranges that start where another ends (`f(…) {…}`)    |
-| `foldingLens.preview.objectProperties`     | `true`  | Show first property of folded object literals              |
-| `foldingLens.preview.commentMaxLength`     | `80`    | Max block-comment preview length before truncation         |
-| `foldingLens.tags.foldClosing`             | `true`  | Include closing tags in the folding range                  |
-| `foldingLens.tags.keepFirstLineAttributes` | `true`  | Keep the opening tag's first-line attributes as real text  |
-| `foldingLens.comments.foldable`            | `true`  | Make block comments foldable with readable previews        |
+| Setting                                | Default | Description                                                  |
+| -------------------------------------- | ------- | ------------------------------------------------------------ |
+| `foldingLens.brackets.foldClosing`     | `true`  | Include closing brackets in the folding range                |
+| `foldingLens.preview.lineCount`        | `true`  | Show folded line count in the preview                        |
+| `foldingLens.preview.brackets`         | `true`  | Wrap preview with brackets (`{…}`)                           |
+| `foldingLens.preview.functionParams`   | `true`  | Show parameter names for folded multi-line parameter lists   |
+| `foldingLens.preview.chaining`         | `true`  | Chain ranges that start where another ends (`f(…) {…}`)      |
+| `foldingLens.preview.commentMaxLength` | `80`    | Complete comment preview limit, including markers; minimum 6 |
+| `foldingLens.comments.foldable`        | `true`  | Make block comments foldable with readable previews          |
 
 ## Known limitations
 
@@ -75,7 +70,7 @@ Press F5 to launch the Extension Development Host.
 
 This project is an independent reimplementation, but owes its product concept to the original.
 
-Inspired by [Better Folding](https://github.com/mtbaqer/vscode-better-folding) — the idea of folding closing brackets/tags into the range and rendering custom collapsed previews.
+Inspired by [Better Folding](https://github.com/mtbaqer/vscode-better-folding) — the idea of folding closing brackets into the range and rendering custom collapsed previews.
 
 The decoration technique for custom collapsed text (zero-width injected text plus `::before` content) follows the approach pioneered by [vscode-explicit-folding](https://github.com/zokugun/vscode-explicit-folding).
 
