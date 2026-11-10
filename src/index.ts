@@ -8,6 +8,7 @@ import { LensFoldingProvider } from "./runtime/provider";
 import { Renderer } from "./runtime/renderer";
 import { FoldingService } from "./runtime/service";
 import { Tokenizer } from "./runtime/tokenizer";
+import { registerExplorerRecursiveCommands } from "./toolkit/recursive";
 
 export function activate(context: ExtensionContext): void {
   const grammars = new GrammarRegistry();
@@ -98,6 +99,7 @@ export function activate(context: ExtensionContext): void {
     }),
   );
 
+  registerExplorerRecursiveCommands(context);
   registerForLanguages();
   renderer.schedule();
 }

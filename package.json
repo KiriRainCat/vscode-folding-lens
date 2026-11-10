@@ -1,7 +1,7 @@
 {
   "name": "folding-lens",
   "displayName": "Folding Lens",
-  "version": "0.2.0",
+  "version": "0.2.1",
   "description": "Better folding for VSCode: closing brackets in range, readable folded previews",
   "categories": [
     "Other"
@@ -46,10 +46,31 @@
     "commands": [
       {
         "command": "foldingLens.reload",
-        "title": "Reload Folding",
-        "category": "Folding Lens"
+        "title": "Reload Folding"
+      },
+      {
+        "command": "foldingLens.explorer.expandRecursively",
+        "title": "Expand Recursively"
+      },
+      {
+        "command": "foldingLens.explorer.collapseRecursively",
+        "title": "Collapse Recursively"
       }
     ],
+    "menus": {
+      "explorer/context": [
+        {
+          "command": "foldingLens.explorer.expandRecursively",
+          "when": "explorerResourceIsFolder",
+          "group": "navigation"
+        },
+        {
+          "command": "foldingLens.explorer.collapseRecursively",
+          "when": "explorerResourceIsFolder",
+          "group": "navigation"
+        }
+      ]
+    },
     "configuration": {
       "title": "Folding Lens",
       "properties": {
